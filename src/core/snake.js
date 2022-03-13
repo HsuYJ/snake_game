@@ -14,13 +14,9 @@ class Snake {
 
   static Events = Events;
 
-  eventCallbacks = Object.keys(Events).reduce((callbacks, key) => {
-    const callbacksRef = callbacks;
-
-    callbacksRef[key] = null;
-
-    return callbacksRef;
-  }, {});
+  eventCallbacks = {
+    [Events.GROW]: null,
+  };
 
   /**
    *

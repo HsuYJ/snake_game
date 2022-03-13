@@ -1,4 +1,5 @@
 import GameMap from './gameMap';
+import Snake from './snake';
 
 /**
  * @typedef {{}} BuildOptions
@@ -11,16 +12,19 @@ class SnakeGame {
   gameMap;
 
   /**
+   * @type {Snake}
+   */
+  snake;
+
+  /**
    *
    * @param {BuildOptions} options
    * @returns
    */
   static create (options) {
-    return new this(options);
-  }
+    const game = new this();
 
-  newGame () {
-    this;
+    return game;
   }
 
   /**
@@ -36,9 +40,24 @@ class SnakeGame {
     const {
       size,
     } = options;
-    const gameMap = new GameMap(size);
+    const gameMap = GameMap.create(size);
 
     this.gameMap = gameMap;
+  }
+
+  /**
+   *
+   * @param {number} size
+   */
+  createSnake (size) {
+    this.snake = Snake.create({
+      position: [5, 5],
+      size,
+    });
+  }
+
+  newGame () {
+    this;
   }
 }
 
