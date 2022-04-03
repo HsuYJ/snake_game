@@ -2,7 +2,7 @@
 
 # Import
 ```javaScript
-import SnakeGame, { Directions, EntityTypes, Events } from 'snakeGame';
+import SnakeGame, { Directions, GameObjTypes, Events } from 'snakeGame';
 ```
 
 ## Interface
@@ -20,11 +20,11 @@ const Directions = {
 };
 ```
 
-#### EntityTypes
+#### GameObjTypes
 
 ```javaScript
-const EntityTypes = {
-  BODY: 'BODY',
+const GameObjTypes = {
+  SNAKE_BODY: 'SNAKE_BODY',
   STONE: 'STONE',
   FRUIT: 'FRUIT',
 };
@@ -47,20 +47,22 @@ const Events = {
 
 ### Methods
 
-#### .setup(options)
+#### .setup(option)
 
 ```javaScript
-const setupOptions = {
+const setupOption = {
   map: {
     name: 'Map I',
     author: 'Nice Guy',
-    entities: [{ entityType: EntityTypes.STONE, x: 0, y: 0 }],
+    width: 10,
+    height: 10,
+    gameObjs: [{ type: GameObjTypes.STONE, x: 0, y: 0 }],
   },
   snakeSize: 3,
   direction: Directions.UP,
 };
 
-SnakeGame.setup(setupOptions);
+SnakeGame.setup(setupOption);
 ```
 
 #### .start()
@@ -93,7 +95,7 @@ SnakeGame.resume();
 SnakeGame.setDirection(Directions.UP);
 ```
 
-#### .on(Event, callback. options)
+#### .on(Event, callback. option)
 
 ```javaScript
 const off = SnakeGame.on(Events.INIT, (e) => {
@@ -121,8 +123,8 @@ SnakeGame.off(Events.INIT, eventCallback);
 const e = {
   eventName: Events.INIT,
   data: {
-    body: [{ entityType: EntityTypes.BODY, x: 3, y: 3 }],
-    map: [{ entityType: EntityTypes.STONE, x: 0, y: 0 }],
+    snake: [{ type: GameObjTypes.SNAKE_BODY, x: 3, y: 3 }],
+    gameMap: [{ type: GameObjTypes.STONE, x: 0, y: 0 }],
   },
 };
 ```
@@ -157,11 +159,7 @@ const e = {
 const e = {
   eventName: Events.FRUIT,
   data: {
-    fruit: {
-      id: 'f000',
-      x: 2,
-      y: 3,
-    },
+    fruit: { id: 'f000', type: GameObjTypes.FRUIT, x: 3, y: 3 },
   },
 };
 ```
@@ -172,7 +170,7 @@ const e = {
 const e = {
   eventName: Events.MOVE,
   data: {
-    body: [{ entityType: 'body', x: 3, y: 3 }],
+    body: [{ type: GameObjTypes.SNAKE_BODY, x: 3, y: 3 }],
   },
 };
 ```
@@ -183,11 +181,7 @@ const e = {
 const e = {
   eventName: Events.EAT,
   data: {
-    fruit: {
-      id: 'f000',
-      x: 2,
-      y: 3,
-    },
+    fruit: {{ id: 'f000', type: GameObjTypes.FRUIT, x: 3, y: 3 },
   },
 };
 ```

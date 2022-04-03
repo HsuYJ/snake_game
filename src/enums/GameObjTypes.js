@@ -1,5 +1,5 @@
 export default {
-  BODY: 'BODY',
+  SNAKE_BODY: 'SNAKE_BODY',
   STONE: 'STONE',
   FRUIT: 'FRUIT',
 };
