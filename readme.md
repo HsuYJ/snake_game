@@ -1,44 +1,49 @@
-#Sanke Game
+# Sanke Game
+
+# Import
+```javaScript
+import SnakeGame, { Directions, EntityTypes, Events } from 'snakeGame';
+```
 
 ## Interface
 
 ### Enums
 
-- Directions
+#### Directions
 
-  ```javaScript
-  const Directions = {
-    UP: [0, -1],
-    RIGHT: [1, 0],
-    DOWN: [0, 1],
-    LEFT: [-1, 0],
-  };
-  ```
+```javaScript
+const Directions = {
+  UP: [0, -1],
+  RIGHT: [1, 0],
+  DOWN: [0, 1],
+  LEFT: [-1, 0],
+};
+```
 
-- EntityTypes
+#### EntityTypes
 
-  ```javaScript
-  const EntityTypes = {
-    BODY: 'BODY',
-    STONE: 'STONE',
-    FRUIT: 'FRUIT',
-  };
-  ```
+```javaScript
+const EntityTypes = {
+  BODY: 'BODY',
+  STONE: 'STONE',
+  FRUIT: 'FRUIT',
+};
+```
 
-- Events
+#### Events
 
-  ```javaScript
-  const Events = {
-    INIT: 'INIT',
-    START: 'START',
-    PAUSE: 'PAUSE',
-    RESUME: 'RESUME',
-    FRUIT: 'FRUIT',
-    MOVE: 'MOVE',
-    EAT: 'EAT',
-    GAME_OVER: 'GAME_OVER',
-  };
-  ```
+```javaScript
+const Events = {
+  INIT: 'INIT',
+  START: 'START',
+  PAUSE: 'PAUSE',
+  RESUME: 'RESUME',
+  FRUIT: 'FRUIT',
+  MOVE: 'MOVE',
+  EAT: 'EAT',
+  GAME_OVER: 'GAME_OVER',
+};
+```
 
 ### Methods
 
@@ -152,9 +157,11 @@ const e = {
 const e = {
   eventName: Events.FRUIT,
   data: {
-    id: 'f000',
-    x: 2,
-    y: 3,
+    fruit: {
+      id: 'f000',
+      x: 2,
+      y: 3,
+    },
   },
 };
 ```
@@ -176,7 +183,11 @@ const e = {
 const e = {
   eventName: Events.EAT,
   data: {
-    fruitId: 'f000',
+    fruit: {
+      id: 'f000',
+      x: 2,
+      y: 3,
+    },
   },
 };
 ```
