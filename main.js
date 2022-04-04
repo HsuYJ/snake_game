@@ -48,15 +48,22 @@ game.on(Events.INIT, (e) => {
     height,
     blockSize,
   });
-  gameObjs.forEach(({ x, y, type }) => {
-    pixelView.add({ x, y, color: GameObjColors[type] });
+  gameObjs.forEach(({
+    id, x, y, type,
+  }) => {
+    pixelView.add({
+      id, x, y, color: GameObjColors[type],
+    });
   });
-  snake.forEach(({ x, y, type }) => {
-    const pixelId = pixelView.add({ x, y, color: GameObjColors[type] });
-
-    pixelData.snake.add(pixelId);
+  snake.forEach(({
+    id, x, y, type,
+  }) => {
+    pixelView.add({
+      id, x, y, color: GameObjColors[type],
+    });
   });
-  pixelView.render();
+  // pixelView.render();
+  pixelView.startRender();
 
   // start
   game.start();
@@ -65,21 +72,33 @@ game.on(Events.INIT, (e) => {
 game.on(Events.SNAKE_MOVE, (e) => {
   const {
     data: {
+      gameMap: { gameObjs },
       body,
+      eatenFruit,
     },
   } = e;
 
   // PixelView
-  pixelData.snake.forEach((id) => {
-    pixelView.removeById(id);
-  });
-  pixelData.snake.clear();
-  body.forEach(({ x, y, type }) => {
-    const pixelId = pixelView.add({ x, y, color: GameObjColors[type] });
+  // body.forEach(({ id }) => {
+  //   pixelView.removeById(id);
+  // });
+  body.forEach(({
+    id, x, y, type,
+  }) => {
+    const isPixelExisting = pixelView.moveTo(id, x, y);
 
-    pixelData.snake.add(pixelId);
+    if (!isPixelExisting) {
+      pixelView.add({
+        id, x, y, color: GameObjColors[type],
+      });
+    }
   });
-  pixelView.render();
+
+  if (eatenFruit) {
+    pixelView.removeById(eatenFruit.id);
+  }
+
+  // pixelView.render();
 });
 
 game.on(Events.DROP_FRUIT, (e) => {
@@ -92,11 +111,10 @@ game.on(Events.DROP_FRUIT, (e) => {
   } = e;
 
   // PixelView
-  const pixelId = pixelView.add({ x, y, color: GameObjColors[type] });
-
-  data.fruits.add(id);
-  pixelData.fruits.add(pixelId);
-  pixelView.render();
+  pixelView.add({
+    id, x, y, color: GameObjColors[type],
+  });
+  // pixelView.render();
 });
 
 game.setup({

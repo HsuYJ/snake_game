@@ -1,11 +1,49 @@
 /**
  *
  * @typedef {{
+ *  id: string;
  *  x: number;
  *  y: number;
  * color: string;
  * }} Pixel
  */
+
+/**
+ *
+ * @param {object} target
+ * @param {string} valueKey
+ * @param {number} targetValue
+ * @param {number} duration seconds
+ */
+function createTween (target, valueKey, targetValue, duration) {
+  const targetRef = target;
+  const value = target[valueKey];
+  const deltaValue = targetValue - value;
+  const totalTime = 1000 * duration;
+  let elapsedTime = 0;
+  let timestamp = Date.now();
+  const update = () => {
+    const now = Date.now();
+    const elapsed = now - timestamp;
+
+    timestamp = now;
+    elapsedTime += elapsed;
+
+    const isComplete = elapsedTime >= totalTime;
+    const currentValue = (isComplete
+      ? targetValue
+      : value + (deltaValue * (elapsedTime / totalTime))
+    );
+
+    targetRef[valueKey] = currentValue;
+
+    if (!isComplete) {
+      setTimeout(update, 1000 / 60);
+    }
+  };
+
+  update();
+}
 
 /**
  *
@@ -20,25 +58,26 @@ function createCanvas (width, height, blockSize) {
   canvas.width = blockSize * width;
   canvas.height = blockSize * height;
   canvas.style.cssText = `
+    max-height: 75vh;
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
     background-color: white;
-    background-image:
-      linear-gradient(
-        90deg,
-        rgba(0, 0, 0, 0.25) 1px,
-        transparent 0 ${blockSize - 1}px,
-        rgba(0, 0, 0, 0.25) 100%
-      ),
-      linear-gradient(
-        0deg,
-        rgba(0, 0, 0, 0.25) 1px,
-        transparent 0 ${blockSize - 1}px,
-        rgba(0, 0, 0, 0.25) 100%
-      )
-    ;
-    background-size: ${blockSize}px ${blockSize}px;
-    background-position: 0 0;
-    background-repeat: repeat;
+    // background-image:
+    //   linear-gradient(
+    //     90deg,
+    //     rgba(0, 0, 0, 0.25) 1px,
+    //     transparent 0 ${blockSize - 1}px,
+    //     rgba(0, 0, 0, 0.25) 100%
+    //   ),
+    //   linear-gradient(
+    //     0deg,
+    //     rgba(0, 0, 0, 0.25) 1px,
+    //     transparent 0 ${blockSize - 1}px,
+    //     rgba(0, 0, 0, 0.25) 100%
+    //   )
+    // ;
+    // background-size: ${blockSize}px ${blockSize}px;
+    // background-position: 0 0;
+    // background-repeat: repeat;
   `;
   document.body.appendChild(canvas);
 
@@ -71,6 +110,7 @@ class PixelView {
     this.width = width;
     this.height = height;
     this.blockSize = blockSize;
+    this.render = this.render.bind(this);
   }
 
   /**
@@ -79,8 +119,11 @@ class PixelView {
    * @returns
    */
   add (pixel) {
-    const { x, y } = pixel;
-    const id = `${x}, ${y}`;
+    const {
+      x,
+      y,
+      id = `${x}, ${y}`,
+    } = pixel;
 
     this.#pixels.set(id, pixel);
 
@@ -101,22 +144,32 @@ class PixelView {
    * @param {number} y
    */
   removeByPosition (x, y) {
-    this.#pixels.delete(`${x}, ${y}`);
+    this.#pixels.delete(`${x},${y}`);
   }
 
   /**
    *
    * @param {string} id
-   * @param {{
-   *  x: number;
-   *  y: number;
-   * }} position
+   * @param {number} x
+   * @param {number} y
    */
-  moveTo (id, position) {
+  moveTo (id, x, y) {
+    const pixels = this.#pixels;
+    const currentPixel = pixels.get(id);
 
+    if (currentPixel) {
+      const duration = 0.1;
+
+      createTween(currentPixel, 'x', x, duration);
+      createTween(currentPixel, 'y', y, duration);
+    }
+
+    return !!currentPixel;
   }
 
   render () {
+    requestAnimationFrame(this.render);
+
     const {
       canvas,
       blockSize,
@@ -132,6 +185,10 @@ class PixelView {
       ctx.fillRect(0, 0, blockSize, blockSize);
       ctx.restore();
     });
+  }
+
+  startRender () {
+    this.render();
   }
 }
 

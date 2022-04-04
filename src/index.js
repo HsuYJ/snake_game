@@ -97,7 +97,7 @@ class SnakeGame {
   #leftTimeToUpdate = 0;
 
   #update () {
-    setTimeout(() => this.#update(), 1000 * 0.1);
+    setTimeout(() => this.#update(), 0);
 
     const now = Date.now();
     const timeElapsed = now - this.#lastUpdateTime;
@@ -109,7 +109,7 @@ class SnakeGame {
       return;
     }
 
-    this.#leftTimeToUpdate += 1000 * 0.5;
+    this.#leftTimeToUpdate += 1000 * 0.1;
 
     const { gameMap } = this;
     const { snake } = gameMap;
@@ -133,6 +133,7 @@ class SnakeGame {
         data: {
           gameMap: gameMap.getInfo(),
           body: snake.getInfo(),
+          eatenFruit,
         },
       });
     });

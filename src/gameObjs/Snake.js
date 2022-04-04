@@ -50,7 +50,7 @@ class Snake {
   }
 
   getInfo () {
-    return this.body.map(({ type, position }) => ({ type, ...position }));
+    return this.body.map((snakeBody) => snakeBody.getInfo());
   }
 
   /**
@@ -76,6 +76,32 @@ class Snake {
   }
 
   move () {
+    const { body, nextDirection, isFruitEaten } = this;
+    const [x, y] = nextDirection;
+    const head = body[0];
+    const size = body.length;
+
+    this.direction = nextDirection;
+    head.move({ x, y });
+
+    if (isFruitEaten) {
+      const newTail = SnakeBody.create({
+        position: body[size - 1].position,
+      });
+
+      this.isFruitEaten = false;
+      body.push(newTail);
+    }
+
+    for (let i = size - 1; i > 0; i -= 1) {
+      const snakeBody = body[i];
+      const frontBody = body[i - 1];
+
+      snakeBody.moveTo(frontBody.position);
+    }
+  }
+
+  move2 () {
     const { body, nextDirection, isFruitEaten } = this;
     const [x, y] = nextDirection;
     const { position: currentHeadPosition } = body[0];
