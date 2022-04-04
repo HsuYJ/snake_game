@@ -3,8 +3,9 @@ export default {
   START: 'START',
   PAUSE: 'PAUSE',
   RESUME: 'RESUME',
-  FRUIT: 'FRUIT',
-  MOVE: 'MOVE',
+  DROP_FRUIT: 'DROP_FRUIT',
+  SNAKE_MOVE: 'SNAKE_MOVE',
+  UPDATE: 'UPDATE',
   EAT: 'EAT',
   GAME_OVER: 'GAME_OVER',
 };

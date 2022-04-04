@@ -7,8 +7,11 @@
 
 const positonKeys = ['x', 'y'];
 
+let sn = 0;
 class GameObj {
   type = 'gameObj';
+
+  id = `gb${sn += 1}`;
 
   /**
    * @type {Position}
@@ -32,6 +35,14 @@ class GameObj {
     return gameobj;
   }
 
+  getInfo () {
+    return {
+      id: this.id,
+      type: this.type,
+      ...this.position,
+    };
+  }
+
   /**
    *
    * @param {Position} delta
@@ -40,7 +51,7 @@ class GameObj {
     const { position } = this;
 
     positonKeys.forEach((key) => {
-      position[key] = delta[key];
+      position[key] += delta[key];
     });
   }
 
@@ -49,7 +60,9 @@ class GameObj {
    * @param {Position} position
    */
   moveTo (position) {
-    this.position = position;
+    const { x, y } = position;
+
+    this.position = { x, y };
   }
 }
 

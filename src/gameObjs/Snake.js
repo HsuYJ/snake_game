@@ -3,6 +3,7 @@ import SnakeBody from './SnakeBody';
 
 /**
  * @typedef {import('./GameObj').Position} Position
+ * @typedef {[number, number]} Direction
  */
 
 class Snake {
@@ -11,7 +12,17 @@ class Snake {
    */
   body = [];
 
+  /**
+   * @type {Direction}
+   */
+  nextDirection = Directions.UP;
+
+  /**
+   * @type {Direction}
+   */
   direction = Directions.UP;
+
+  isFruitEaten = false;
 
   /**
    *
@@ -38,24 +49,50 @@ class Snake {
     return snake;
   }
 
-  getBody () {
+  getInfo () {
     return this.body.map(({ type, position }) => ({ type, ...position }));
   }
 
-  grow () {
-    const { body, moveDirection } = this;
-    const { position: headPosition } = body[0];
-    const newHead = SnakeBody.create({
-      position: headPosition.map((pos, index) => pos + moveDirection[index]),
-    });
+  /**
+   *
+   * @param {Direction} direction
+   */
+  setDirection (direction) {
+    const [x, y] = direction;
+    const { direction: [currentDirX, currentDirY] } = this;
+    const isAccepted = ((x !== 0 && parseInt(x + currentDirX, 10) !== 0)
+      || (y !== 0 && parseInt(y + currentDirY, 10) !== 0)
+    );
 
-    body.unshift(newHead);
+    if (!isAccepted) {
+      return;
+    }
+
+    this.nextDirection = direction;
+  }
+
+  eatFruit () {
+    this.isFruitEaten = true;
   }
 
   move () {
-    this.body.forEach((entity) => {
+    const { body, nextDirection, isFruitEaten } = this;
+    const [x, y] = nextDirection;
+    const { position: currentHeadPosition } = body[0];
+    const tail = body[body.length - 1];
+    const newHead = (isFruitEaten
+      ? SnakeBody.create({ position: tail.position })
+      : body.pop()
+    );
 
+    this.isFruitEaten = false;
+    this.direction = nextDirection;
+
+    newHead.moveTo({
+      x: currentHeadPosition.x + x,
+      y: currentHeadPosition.y + y,
     });
+    body.unshift(newHead);
   }
 }
 

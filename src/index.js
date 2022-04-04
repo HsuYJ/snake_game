@@ -1,6 +1,7 @@
+import GameObjTypes from './enums/GameObjTypes';
 import Events from './enums/Events';
 import GameMap from './gameMap';
-import Snake from './gameObjs/Snake';
+import Fruit from './gameObjs/Fruit';
 
 export { default as Directions } from './enums/Directions';
 export { default as GameObjTypes } from './enums/GameObjTypes';
@@ -8,15 +9,29 @@ export { Events };
 
 /**
  * @typedef {import('./gameMap').MapData} MapData
+ * @typedef {import('./gameObjs/Snake').Direction} Direction
  */
 
-const SnakeGame = {
+function update () {
+
+}
+
+class SnakeGame {
   /**
    * @type {Object<string, Set<Function>>}
    */
-  eventCallbacks: {
+  eventCallbacks = {
     [Events.INIT]: new Set(),
-  },
+    [Events.SNAKE_MOVE]: new Set(),
+    [Events.UPDATE]: new Set(),
+    [Events.DROP_FRUIT]: new Set(),
+  };
+
+  static create () {
+    const game = new this();
+
+    return game;
+  }
 
   /**
    *
@@ -24,7 +39,10 @@ const SnakeGame = {
    */
   setup (mapData) {
     const gameMap = GameMap.create(mapData);
-    const snake = gameMap.snake.getBody();
+    const snake = gameMap.snake.getInfo();
+
+    this.gameMap = gameMap;
+
     const eventName = Events.INIT;
     const eventCallbacks = this.eventCallbacks[eventName];
 
@@ -33,10 +51,105 @@ const SnakeGame = {
         eventName,
         data: {
           snake,
+          gameMap: gameMap.getInfo(),
         },
       });
     });
-  },
+  }
+
+  /**
+   * @type {Fruit}
+   */
+  #fruit = null;
+
+  #dropFruit () {
+    const fruit = this.gameMap.dropFruit();
+
+    this.#fruit = fruit;
+
+    const eventName = Events.DROP_FRUIT;
+    const eventCallbacks = this.eventCallbacks[eventName];
+
+    eventCallbacks.forEach((callback) => {
+      callback({
+        eventName,
+        data: {
+          fruit: fruit.getInfo(),
+        },
+      });
+    });
+  }
+
+  #checkFruitEating () {
+    const { gameMap } = this;
+    const [{ position: headPosition }] = gameMap.snake.body;
+    const fruit = this.#fruit;
+    const { position: fruitPosition } = fruit;
+    const isFruitEaten = (headPosition.x === fruitPosition.x
+      && headPosition.y === fruitPosition.y
+    );
+
+    return isFruitEaten ? fruit : null;
+  }
+
+  #lastUpdateTime = Date.now();
+
+  #leftTimeToUpdate = 0;
+
+  #update () {
+    setTimeout(() => this.#update(), 1000 * 0.1);
+
+    const now = Date.now();
+    const timeElapsed = now - this.#lastUpdateTime;
+
+    this.#lastUpdateTime = now;
+    this.#leftTimeToUpdate -= timeElapsed;
+
+    if (this.#leftTimeToUpdate > 0) {
+      return;
+    }
+
+    this.#leftTimeToUpdate += 1000 * 0.5;
+
+    const { gameMap } = this;
+    const { snake } = gameMap;
+
+    snake.move();
+
+    const eatenFruit = this.#checkFruitEating();
+
+    if (eatenFruit) {
+      gameMap.removeGameObj(eatenFruit);
+      snake.eatFruit(eatenFruit);
+      this.#dropFruit();
+    }
+
+    const eventName = Events.SNAKE_MOVE;
+    const eventCallbacks = this.eventCallbacks[eventName];
+
+    eventCallbacks.forEach((callback) => {
+      callback({
+        eventName,
+        data: {
+          gameMap: gameMap.getInfo(),
+          body: snake.getInfo(),
+        },
+      });
+    });
+  }
+
+  start () {
+    this.#dropFruit();
+    this.#update();
+  }
+
+  /**
+   *
+   * @param {Direction} direction
+   */
+  setDirection (direction) {
+    this.gameMap.snake.setDirection(direction);
+  }
 
   /**
    *
@@ -61,7 +174,7 @@ const SnakeGame = {
     eventCallbacks.add(usedCallback);
 
     return off;
-  },
-};
+  }
+}
 
 export default SnakeGame;

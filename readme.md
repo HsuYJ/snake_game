@@ -39,7 +39,8 @@ const Events = {
   PAUSE: 'PAUSE',
   RESUME: 'RESUME',
   FRUIT: 'FRUIT',
-  MOVE: 'MOVE',
+  SNAKE_MOVE: 'SNAKE_MOVE',
+  UPDATE: 'UPDATE',
   EAT: 'EAT',
   GAME_OVER: 'GAME_OVER',
 };
@@ -124,7 +125,11 @@ const e = {
   eventName: Events.INIT,
   data: {
     snake: [{ type: GameObjTypes.SNAKE_BODY, x: 3, y: 3 }],
-    gameMap: [{ type: GameObjTypes.STONE, x: 0, y: 0 }],
+    gameMap: {
+      width: 10,
+      height: 10,
+      gameObjs:[{ type: GameObjTypes.STONE, x: 0, y: 0 }],
+    },
   },
 };
 ```
@@ -153,22 +158,33 @@ const e = {
 };
 ```
 
-#### .FRUIT
+#### .DROP_FRUIT
 
 ```javaScript
 const e = {
-  eventName: Events.FRUIT,
+  eventName: Events.DROP_FRUIT,
   data: {
     fruit: { id: 'f000', type: GameObjTypes.FRUIT, x: 3, y: 3 },
   },
 };
 ```
 
-#### .MOVE
+#### .SNAKE_MOVE
 
 ```javaScript
 const e = {
-  eventName: Events.MOVE,
+  eventName: Events.SNAKE_MOVE,
+  data: {
+    body: [{ type: GameObjTypes.SNAKE_BODY, x: 3, y: 3 }],
+  },
+};
+```
+
+#### .UPDATE
+
+```javaScript
+const e = {
+  eventName: Events.UPDATE,
   data: {
     body: [{ type: GameObjTypes.SNAKE_BODY, x: 3, y: 3 }],
   },
