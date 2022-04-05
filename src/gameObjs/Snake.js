@@ -82,7 +82,6 @@ class Snake {
     const size = body.length;
 
     this.direction = nextDirection;
-    head.move({ x, y });
 
     if (isFruitEaten) {
       const newTail = SnakeBody.create({
@@ -99,6 +98,8 @@ class Snake {
 
       snakeBody.moveTo(frontBody.position);
     }
+
+    head.move({ x, y });
   }
 
   move2 () {
