@@ -8,42 +8,83 @@
  * }} Pixel
  */
 
-/**
- *
- * @param {object} target
- * @param {string} valueKey
- * @param {number} targetValue
- * @param {number} duration seconds
- */
-function createTween (target, valueKey, targetValue, duration) {
-  const targetRef = target;
-  const value = target[valueKey];
-  const deltaValue = targetValue - value;
-  const totalTime = 1000 * duration;
-  let elapsedTime = 0;
+const createTween = (() => {
+  /**
+   * @type {Set<{
+   *  target: {};
+   *  valueKey: string;
+   *  value: number;
+   *  targetValue: number;
+   *  deltaValue: number;
+   *  totalTime: number;
+   *  elapsedTime: number;
+   * }>}
+   */
+  const tweens = new Set();
   let timestamp = Date.now();
-  const update = () => {
+
+  function update () {
+    setTimeout(update, 1000 / 60);
+
     const now = Date.now();
     const elapsed = now - timestamp;
 
     timestamp = now;
-    elapsedTime += elapsed;
 
-    const isComplete = elapsedTime >= totalTime;
-    const currentValue = (isComplete
-      ? targetValue
-      : value + (deltaValue * (elapsedTime / totalTime))
-    );
+    tweens.forEach((tween) => {
+      const tweenRef = tween;
 
-    targetRef[valueKey] = currentValue;
+      tweenRef.elapsedTime += elapsed;
 
-    if (!isComplete) {
-      setTimeout(update, 1000 / 60);
-    }
-  };
+      const {
+        value,
+        targetValue,
+        deltaValue,
+        totalTime,
+        elapsedTime,
+      } = tweenRef;
+
+      const isComplete = elapsedTime >= totalTime;
+      const currentValue = (isComplete
+        ? targetValue
+        : value + (deltaValue * (elapsedTime / totalTime))
+      );
+
+      tweenRef.target[tweenRef.valueKey] = currentValue;
+
+      if (isComplete) {
+        tweens.delete(tween);
+      }
+    });
+  }
+
+  /**
+   *
+   * @param {object} target
+   * @param {string} valueKey
+   * @param {number} targetValue
+   * @param {number} duration seconds
+   */
+  function create (target, valueKey, targetValue, duration) {
+    const value = target[valueKey];
+    const deltaValue = targetValue - value;
+    const totalTime = duration * 1000;
+
+    tweens.add({
+      target,
+      valueKey,
+      value,
+      targetValue,
+      deltaValue,
+      totalTime,
+      elapsedTime: 0,
+    });
+  }
 
   update();
-}
+
+  return create;
+})();
 
 /**
  *
@@ -175,14 +216,15 @@ class PixelView {
       blockSize,
     } = this;
     const pixels = this.#pixels;
+    const borderSize = 0;
     const ctx = canvas.getContext('2d');
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     pixels.forEach(({ x, y, color }) => {
       ctx.save();
       ctx.fillStyle = color;
-      ctx.translate(blockSize * x, blockSize * y);
-      ctx.fillRect(0, 0, blockSize, blockSize);
+      ctx.translate(blockSize * x - borderSize, blockSize * y - borderSize);
+      ctx.fillRect(0, 0, blockSize + borderSize * 2, blockSize + borderSize * 2);
       ctx.restore();
     });
   }
