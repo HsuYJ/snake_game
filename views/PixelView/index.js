@@ -24,7 +24,7 @@ const createTween = (() => {
   let timestamp = Date.now();
 
   function update () {
-    setTimeout(update, 1000 / 60);
+    requestAnimationFrame(update);
 
     const now = Date.now();
     const elapsed = now - timestamp;
@@ -91,36 +91,22 @@ const createTween = (() => {
  * @param {number} width
  * @param {number} height
  * @param {number} blockSize
+ * @param {HTMLCanvasElement} rootCanvas
  * @returns
  */
-function createCanvas (width, height, blockSize) {
-  const canvas = document.createElement('canvas');
+function createCanvas (width, height, blockSize, rootCanvas) {
+  const canvas = rootCanvas || document.createElement('canvas');
 
   canvas.width = blockSize * width;
   canvas.height = blockSize * height;
   canvas.style.cssText = `
-    max-height: 75vh;
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
     background-color: white;
-    // background-image:
-    //   linear-gradient(
-    //     90deg,
-    //     rgba(0, 0, 0, 0.25) 1px,
-    //     transparent 0 ${blockSize - 1}px,
-    //     rgba(0, 0, 0, 0.25) 100%
-    //   ),
-    //   linear-gradient(
-    //     0deg,
-    //     rgba(0, 0, 0, 0.25) 1px,
-    //     transparent 0 ${blockSize - 1}px,
-    //     rgba(0, 0, 0, 0.25) 100%
-    //   )
-    // ;
-    // background-size: ${blockSize}px ${blockSize}px;
-    // background-position: 0 0;
-    // background-repeat: repeat;
   `;
-  document.body.appendChild(canvas);
+
+  if (!canvas.parentNode) {
+    document.body.appendChild(canvas);
+  }
 
   return canvas;
 }
@@ -137,6 +123,7 @@ class PixelView {
    *  width: number;
    *  height: number;
    *  blockSize: number;
+   *  rootCanvas: HTMLCanvasElement;
    * }} option
    */
   setup (option = {}) {
@@ -144,14 +131,22 @@ class PixelView {
       width,
       height,
       blockSize = 10,
+      rootCanvas,
     } = option;
-    const canvas = createCanvas(width, height, blockSize);
+    const canvas = createCanvas(width, height, blockSize, rootCanvas);
+    const shadowCanvas = canvas.cloneNode();
 
     this.canvas = canvas;
+    this.shadowCanvas = shadowCanvas;
     this.width = width;
     this.height = height;
     this.blockSize = blockSize;
     this.render = this.render.bind(this);
+
+    const shadowCtx = shadowCanvas.getContext('2d');
+
+    shadowCtx.fillStyle = 'white';
+    shadowCtx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
   /**
@@ -193,14 +188,13 @@ class PixelView {
    * @param {string} id
    * @param {number} x
    * @param {number} y
+   * @param {number} duration second(s)
    */
-  moveTo (id, x, y) {
+  moveTo (id, x, y, duration) {
     const pixels = this.#pixels;
     const currentPixel = pixels.get(id);
 
     if (currentPixel) {
-      const duration = 0.1;
-
       createTween(currentPixel, 'x', x, duration);
       createTween(currentPixel, 'y', y, duration);
     }
@@ -208,25 +202,59 @@ class PixelView {
     return !!currentPixel;
   }
 
+  #lastRenderTime = Date.now();
+
+  #leftTimeToRender = 0;
+
   render () {
     requestAnimationFrame(this.render);
 
+    const now = Date.now();
+    const timeElapsed = now - this.#lastRenderTime;
+
+    this.#lastRenderTime = now;
+    this.#leftTimeToRender -= timeElapsed;
+
+    if (this.#leftTimeToRender > 0) {
+      return;
+    }
+
+    this.#leftTimeToRender += 1000 / 60;
+
     const {
       canvas,
+      shadowCanvas,
       blockSize,
     } = this;
+    const { width, height } = shadowCanvas;
     const pixels = this.#pixels;
-    const borderSize = 0;
     const ctx = canvas.getContext('2d');
+    const shadowCtx = shadowCanvas.getContext('2d');
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    shadowCtx.clearRect(0, 0, width, height);
+    // shadowCtx.fillStyle = 'white';
+    // shadowCtx.fillRect(0, 0, width, height);
+    ctx.clearRect(0, 0, width, height);
     pixels.forEach(({ x, y, color }) => {
-      ctx.save();
-      ctx.fillStyle = color;
-      ctx.translate(blockSize * x - borderSize, blockSize * y - borderSize);
-      ctx.fillRect(0, 0, blockSize + borderSize * 2, blockSize + borderSize * 2);
-      ctx.restore();
+      shadowCtx.save();
+      shadowCtx.fillStyle = color;
+      shadowCtx.translate(blockSize * x, blockSize * y);
+      shadowCtx.fillRect(0, 0, blockSize, blockSize);
+      shadowCtx.restore();
     });
+
+    // if (true ?? this.is3d) {
+    //   ctx.save();
+    //   ctx.globalAlpha = 0.2;
+
+    //   for (let i = blockSize / 4; i > 0; i -= 1) {
+    //     ctx.drawImage(shadowCanvas, i, i * 2, width, height);
+    //   }
+
+    //   ctx.restore();
+    // }
+
+    ctx.drawImage(shadowCanvas, 0, 0, width, height);
   }
 
   startRender () {

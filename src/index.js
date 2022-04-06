@@ -7,15 +7,6 @@ export { default as Directions } from './enums/Directions';
 export { default as GameObjTypes } from './enums/GameObjTypes';
 export { Events };
 
-/**
- * @typedef {import('./gameMap').MapData} MapData
- * @typedef {import('./gameObjs/Snake').Direction} Direction
- */
-
-function update () {
-
-}
-
 class SnakeGame {
   /**
    * @type {Object<string, Set<Function>>}
@@ -25,6 +16,7 @@ class SnakeGame {
     [Events.SNAKE_MOVE]: new Set(),
     [Events.UPDATE]: new Set(),
     [Events.DROP_FRUIT]: new Set(),
+    [Events.GAME_OVER]: new Set(),
   };
 
   static create () {
@@ -35,16 +27,16 @@ class SnakeGame {
 
   /**
    *
-   * @param {MapData} mapData
+   * @param {import('./gameMap').MapData} mapData
    */
   setup (mapData) {
     const gameMap = GameMap.create(mapData);
-    const snake = gameMap.snake.getInfo();
 
     this.gameMap = gameMap;
 
     const eventName = Events.INIT;
     const eventCallbacks = this.eventCallbacks[eventName];
+    const snake = gameMap.snake.getInfo();
 
     eventCallbacks.forEach((callback) => {
       callback({
@@ -80,6 +72,8 @@ class SnakeGame {
     });
   }
 
+  #score = 0;
+
   #checkFruitEating () {
     const { gameMap } = this;
     const [{ position: headPosition }] = gameMap.snake.body;
@@ -92,12 +86,56 @@ class SnakeGame {
     return isFruitEaten ? fruit : null;
   }
 
+  #checkCollision () {
+    const { gameMap } = this;
+    const { width, height, gameObjs } = gameMap.getInfo();
+    const [head, ...snakeBodies] = gameMap.snake.getInfo();
+    const { x, y } = head;
+    const allObjs = gameObjs.concat(snakeBodies).filter(({ type }) => type !== GameObjTypes.FRUIT);
+    const isCollidedWithGameObj = allObjs.some((gameObj) => (gameObj.x === x && gameObj.y === y));
+
+    if (isCollidedWithGameObj) {
+      return isCollidedWithGameObj;
+    }
+
+    const isCollidedWithWall = (x < 0
+      || x >= width
+      || y < 0
+      || y >= height
+    );
+
+    return isCollidedWithWall;
+  }
+
+  playing = false;
+
+  #gameover = false;
+
+  #updateInterval = 0.2;
+
   #lastUpdateTime = Date.now();
 
   #leftTimeToUpdate = 0;
 
   #update () {
-    setTimeout(() => this.#update(), 0);
+    if (this.#gameover) {
+      const eventName = Events.GAME_OVER;
+      const eventCallbacks = this.eventCallbacks[eventName];
+      const score = this.#score;
+
+      eventCallbacks.forEach((callback) => {
+        callback({
+          eventName,
+          data: {
+            score,
+          },
+        });
+      });
+
+      return;
+    }
+
+    requestAnimationFrame(() => this.#update());
 
     const now = Date.now();
     const timeElapsed = now - this.#lastUpdateTime;
@@ -109,38 +147,52 @@ class SnakeGame {
       return;
     }
 
-    this.#leftTimeToUpdate += 1000 * 0.1;
+    const updateInterval = this.#updateInterval;
+
+    this.#leftTimeToUpdate += 1000 * updateInterval;
 
     const { gameMap } = this;
     const { snake } = gameMap;
 
     snake.move();
 
+    const isCollided = this.#checkCollision();
+
+    if (isCollided) {
+      this.#gameover = true;
+    }
+
     const eatenFruit = this.#checkFruitEating();
 
     if (eatenFruit) {
       gameMap.removeGameObj(eatenFruit);
       snake.eatFruit(eatenFruit);
+      this.#score += 1;
       this.#dropFruit();
     }
 
     const eventName = Events.SNAKE_MOVE;
     const eventCallbacks = this.eventCallbacks[eventName];
+    const score = this.#score;
 
     eventCallbacks.forEach((callback) => {
       callback({
         eventName,
         data: {
+          updateInterval,
           gameMap: gameMap.getInfo(),
           body: snake.getInfo(),
           eatenFruit,
+          score,
         },
       });
     });
   }
 
   start () {
+    this.playing = true;
     this.#dropFruit();
+    this.#lastUpdateTime = Date.now();
     this.#update();
   }
 
